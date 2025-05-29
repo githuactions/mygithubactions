@@ -44,6 +44,7 @@ jobs:
 
       - name: Setup SSH Key
         run: |
+          sudo su
           mkdir -p ~/.ssh
           printf "%s" "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
