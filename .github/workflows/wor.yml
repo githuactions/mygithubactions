@@ -1,0 +1,71 @@
+
+
+name: Build and Deploy Node.js App to EC2
+
+on:
+  push:
+    branches:
+      - main  # Trigger deployment when changes are pushed to the main branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the code
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      # Step 2: Set up Node.js (Install Node.js)
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '18'  # Adjust this to match your Node.js version
+
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: |
+          npm install
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build  # This ensures that the deploy job runs after the build job
+
+    steps:
+      # Step 1: Checkout the repository again (just to be safe)
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      # Step 2: Set up SSH (use the private key stored in secrets)
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC2ZEhSPcoy+a8OJDMDhItJQuCaBN8mCrijaAtAoskMNn07d6zvliXzYBQuJszbjPfF8X5TgCfEPlMDWdyLbddnyuqffF8mXHhTjDNEuVWeBameP+kv6UDuq7EZznb8WxxUsuJnESPa95lpV4/2gF5Zqh+m5CIxG/GE9uS51HVqVEG6XfahdEMucuQlnqKjjzVfSPOtPlmPWFWhq/y0yNioKRggB2vVIWTX0NCbIEBcuiO740x0u0xYozzuxikrGSRL5q6rotKhOx5CxxY/fYxzsGLjENr5xDEFZnCgtIxuh9zicDiy7iA7hzj0jNRVY3SSJ6OU0XIl/HpnQ+wvaKyeMhTKMP5tnQFG3lBjY6PefM4JgqhCSk3BoLvLbluz+aX37I+ZcrL8+gGoSydRhVyFcjwz3TXDPCkKs/KHNQftIyvwVVlQ096k7cxZokwkbvHy2+iwHj3DwEirdUncyyeA0wIVu9nOj/Vs4plv/9kEglMtNVmN9Jj353+zvN3X/k7cmpIzTHqhPxevq9lz94RTye8zIBG7VZ7i5ZxQUbkT57r8X2hoyh35fhz/rhwRJMtdlXhqzmcJN14GLsb8Pc9N+y0bSkKP2nvpAPLBC4eKt5obBz50cEePjwm+zsXh8pXcXIGuQUxuQc47gZXqAbLQIcfnktJiTV6J6F5FLYItww== github-actions-deploy"
+
+      # Step 3: Deploy to EC2
+      - name: Deploy to EC2
+        run: |
+          # SSH into EC2 instance and run deployment commands
+          ssh -o StrictHostKeyChecking=no ubuntu@13.60.240.76 <<EOF
+            # Navigate to the app directory on the EC2 instance
+            cd /home/ubuntu/hello-node  # Change to your app's directory
+
+            # Pull the latest changes from the GitHub repository
+            git pull origin main
+
+            # Install/update the dependencies
+            npm install
+
+            # Stop the app if it's already running
+            pm2 stop app.js || true  # Stop the app if it's running
+
+            # Start the app using PM2
+            pm2 start app.js --name "my-node-app"  # Adjust the filename if necessary
+
+            # Save the PM2 process list so the app can auto-start on reboot
+            pm2 save
+
+            # Optionally, you can also configure PM2 to start on system startup:
+            # pm2 startup
+
+          EOF
