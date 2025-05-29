@@ -47,7 +47,7 @@ jobs:
           sudo su
           mkdir -p ~/.ssh
           printf "%s" "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+          sudo chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H 13.60.240.76 >> ~/.ssh/known_hosts
 
 
@@ -55,7 +55,9 @@ jobs:
       - name: Deploy to EC2
         run: |
           # SSH into EC2 instance and run deployment commands
-          ssh -o StrictHostKeyChecking=no ubuntu@13.60.240.76 <<EOF
+          echo "${{ secrets.EC2_SSH_KEY }}" > key.pem
+          chmod 600 key.pem
+          ssh -i key.pem -o StrictHostKeyChecking=no ubuntu@13.60.240.76 <<EOF
             # Navigate to the app directory on the EC2 instance
             cd /home/ubuntu/mygithubactions  # Change to your app's directory
 
