@@ -1,0 +1,35 @@
+name: Build and Deploy Node.js App
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18' # or your version
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run build
+        run: npm run build
+
+      # Example: Deploy using rsync to a remote server
+      - name: Deploy to Server
+        uses: easingthemes/ssh-deploy@v2.1.5
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          remote-user: ubuntu
+          server-ip: 13.60.240.76
+          remote-path: /var/www/my-app
+          local-path: build
+
+# SSH_PRIVATE_KEY: Your private SSH key for the deployment server
+# SERVER_IP: The IP address of your server
